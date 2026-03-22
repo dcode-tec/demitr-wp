@@ -1,0 +1,237 @@
+/**
+ * Demitr WP — Admin Settings Page Styles
+ */
+
+/* ── Layout ────────────────────────────────────────────────────────────────── */
+
+.demitr-wrap {
+	max-width: 1000px;
+}
+
+.demitr-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 20px 0 16px;
+	border-bottom: 1px solid #dcdcde;
+	margin-bottom: 24px;
+}
+
+.demitr-header__brand {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.demitr-logo {
+	font-size: 32px;
+	line-height: 1;
+}
+
+.demitr-header__brand h1 {
+	margin: 0 0 2px;
+	font-size: 20px;
+	font-weight: 700;
+	color: #1d2327;
+}
+
+.demitr-header__tagline {
+	margin: 0;
+	font-size: 12px;
+	color: #646970;
+}
+
+/* ── Status badge ───────────────────────────────────────────────────────────── */
+
+.demitr-status {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 13px;
+	font-weight: 600;
+	padding: 6px 14px;
+	border-radius: 20px;
+	border: 1px solid transparent;
+}
+
+.demitr-status__dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+}
+
+.demitr-status--active {
+	background: #f0fdf4;
+	border-color: #bbf7d0;
+	color: #15803d;
+}
+
+.demitr-status--active .demitr-status__dot {
+	background: #16a34a;
+}
+
+.demitr-status--needs-config {
+	background: #fffbeb;
+	border-color: #fde68a;
+	color: #b45309;
+}
+
+.demitr-status--needs-config .demitr-status__dot {
+	background: #f59e0b;
+}
+
+.demitr-status--inactive {
+	background: #f9fafb;
+	border-color: #e5e7eb;
+	color: #6b7280;
+}
+
+.demitr-status--inactive .demitr-status__dot {
+	background: #9ca3af;
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────────────── */
+
+.demitr-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	margin-bottom: 20px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────────── */
+
+.demitr-card {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	padding: 20px 24px 16px;
+}
+
+.demitr-card--full {
+	grid-column: 1 / -1;
+}
+
+.demitr-card__title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 16px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #1d2327;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.demitr-card__title .dashicons {
+	color: #7c3aed;
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+}
+
+.demitr-card .form-table {
+	margin: 0;
+}
+
+.demitr-card .form-table th {
+	width: 160px;
+	padding: 10px 10px 10px 0;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.demitr-card .form-table td {
+	padding: 8px 0;
+}
+
+/* ── GDPR compliance grid ───────────────────────────────────────────────────── */
+
+.demitr-compliance-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 14px;
+}
+
+.demitr-compliance-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px 14px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+}
+
+.demitr-compliance-item--ok {
+	background: #f0fdf4;
+	border-color: #bbf7d0;
+}
+
+.demitr-compliance-item--action {
+	background: #fff7ed;
+	border-color: #fed7aa;
+}
+
+.demitr-compliance-item__icon {
+	font-size: 15px;
+	line-height: 1.4;
+	flex-shrink: 0;
+}
+
+.demitr-compliance-item strong {
+	display: block;
+	font-size: 12.5px;
+	color: #1d2327;
+	margin-bottom: 3px;
+}
+
+.demitr-compliance-item p {
+	margin: 0;
+	font-size: 12px;
+	color: #646970;
+	line-height: 1.5;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────── */
+
+.demitr-footer {
+	padding: 16px 0 8px;
+	border-top: 1px solid #dcdcde;
+	color: #646970;
+	font-size: 12px;
+}
+
+.demitr-footer a {
+	color: #7c3aed;
+	text-decoration: none;
+}
+
+.demitr-footer a:hover {
+	text-decoration: underline;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+	.demitr-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.demitr-compliance-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: 600px) {
+	.demitr-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+	}
+
+	.demitr-compliance-grid {
+		grid-template-columns: 1fr;
+	}
+}
