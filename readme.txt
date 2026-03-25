@@ -1,5 +1,5 @@
 === Demitr ===
-Contributors: dcodetec
+Contributors: dcodetechnologies
 Tags: chatbot, ai, gdpr, chat widget, live chat
 Requires at least: 6.4
 Tested up to: 6.8
