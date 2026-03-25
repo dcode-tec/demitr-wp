@@ -7,9 +7,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$enabled  = (bool) get_option( 'demitr_enabled', false );
-$api_url  = (string) get_option( 'demitr_api_url', '' );
-$status   = ( $enabled && '' !== trim( $api_url ) ) ? 'active' : ( $enabled ? 'needs-config' : 'inactive' );
+$demitr_enabled = (bool) get_option( 'demitr_enabled', false );
+$demitr_api_url = (string) get_option( 'demitr_api_url', '' );
+$demitr_status  = ( $demitr_enabled && '' !== trim( $demitr_api_url ) ) ? 'active' : ( $demitr_enabled ? 'needs-config' : 'inactive' );
 ?>
 <div class="wrap demitr-wrap">
 
@@ -23,11 +23,11 @@ $status   = ( $enabled && '' !== trim( $api_url ) ) ? 'active' : ( $enabled ? 'n
 				</p>
 			</div>
 		</div>
-		<div class="demitr-status demitr-status--<?php echo esc_attr( $status ); ?>">
-			<?php if ( 'active' === $status ) : ?>
+		<div class="demitr-status demitr-status--<?php echo esc_attr( $demitr_status ); ?>">
+			<?php if ( 'active' === $demitr_status ) : ?>
 				<span class="demitr-status__dot"></span>
 				<?php esc_html_e( 'Active', 'demitr' ); ?>
-			<?php elseif ( 'needs-config' === $status ) : ?>
+			<?php elseif ( 'needs-config' === $demitr_status ) : ?>
 				<span class="demitr-status__dot"></span>
 				<?php esc_html_e( 'Needs API URL', 'demitr' ); ?>
 			<?php else : ?>
@@ -37,7 +37,7 @@ $status   = ( $enabled && '' !== trim( $api_url ) ) ? 'active' : ( $enabled ? 'n
 		</div>
 	</div>
 
-	<?php if ( 'needs-config' === $status ) : ?>
+	<?php if ( 'needs-config' === $demitr_status ) : ?>
 		<div class="notice notice-warning inline">
 			<p>
 				<?php esc_html_e( 'The widget is enabled but no API endpoint is set. Add the URL of your Demitr API server below.', 'demitr' ); ?>

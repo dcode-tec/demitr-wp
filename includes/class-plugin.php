@@ -33,76 +33,80 @@ class Plugin {
 			$admin->init();
 		}
 
-		add_action( 'wp_footer', [ $this, 'inject_widget' ] );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_widget' ] );
+		add_filter( 'script_loader_tag', [ $this, 'add_widget_data_attributes' ], 10, 2 );
 	}
 
 	/**
-	 * Output the widget script tag in the footer.
+	 * Enqueue the widget script in the footer.
 	 *
-	 * If an API key is set, outputs data-key only (paid/managed mode).
-	 * Otherwise outputs all Business Card data-* attributes (free mode).
-	 * Note: no defer attribute — the widget IIFE must execute synchronously
-	 * so the consent gate and UI are available immediately on DOMContentLoaded.
+	 * Uses wp_enqueue_script() per WordPress coding standards.
+	 * Data attributes are added via the script_loader_tag filter.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
-	public function inject_widget(): void {
-		if ( ! $this->is_active() ) {
+	public function enqueue_widget(): void {
+		if ( ! $this->is_active() || is_admin() ) {
 			return;
 		}
 
-		if ( is_admin() ) {
-			return;
+		wp_enqueue_script(
+			'demitr-widget',
+			DEMITR_PLUGIN_URL . 'public/demitr.js',
+			[],
+			DEMITR_VERSION,
+			true
+		);
+	}
+
+	/**
+	 * Add data-* attributes to the enqueued widget script tag.
+	 *
+	 * WordPress does not natively support data attributes on enqueued scripts,
+	 * so we use the script_loader_tag filter to inject them.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $tag    The full script tag HTML.
+	 * @param string $handle The script handle.
+	 *
+	 * @return string Modified script tag.
+	 */
+	public function add_widget_data_attributes( string $tag, string $handle ): string {
+		if ( 'demitr-widget' !== $handle ) {
+			return $tag;
 		}
 
-		$api_key    = sanitize_text_field( (string) get_option( 'demitr_api_key', '' ) );
-		$script_url = esc_url( DEMITR_PLUGIN_URL . 'public/demitr.js' );
+		$api_key = sanitize_text_field( (string) get_option( 'demitr_api_key', '' ) );
 
 		if ( '' !== $api_key ) {
-			// Paid / managed mode — widget config served from demitr.ai/api/config/:key.
-			printf(
-				'<script src="%s" data-key="%s"></script>' . PHP_EOL,
-				$script_url,
-				esc_attr( $api_key )
-			);
+			// Paid mode — only data-key needed.
+			$attrs = sprintf( ' data-key="%s"', esc_attr( $api_key ) );
 		} else {
-			// Free mode — Business Card attributes passed directly.
-			$api_url       = esc_url( (string) get_option( 'demitr_api_url', '' ) );
-			$brand         = esc_attr( sanitize_text_field( (string) get_option( 'demitr_brand', get_bloginfo( 'name' ) ) ) );
-			$business_name = esc_attr( sanitize_text_field( (string) get_option( 'demitr_brand', get_bloginfo( 'name' ) ) ) );
-			$business_type = esc_attr( sanitize_text_field( (string) get_option( 'demitr_business_type', '' ) ) );
-			$business_info = esc_attr( sanitize_textarea_field( (string) get_option( 'demitr_business_info', '' ) ) );
-			$business_url  = esc_url( (string) get_option( 'demitr_business_url', get_home_url() ) );
-			$lang          = esc_attr( $this->get_lang() );
-			$color         = esc_attr( $this->sanitize_hex_color( (string) get_option( 'demitr_color', '#7c3aed' ) ) );
-			$position      = esc_attr( $this->sanitize_position( (string) get_option( 'demitr_position', 'bottom-right' ) ) );
-
-			printf(
-				'<script src="%s" data-api="%s" data-brand="%s" data-business-name="%s" data-business-type="%s" data-business-info="%s" data-business-url="%s" data-lang="%s" data-color="%s" data-position="%s"></script>' . PHP_EOL,
-				$script_url,
-				$api_url,
-				$brand,
-				$business_name,
-				$business_type,
-				$business_info,
-				$business_url,
-				$lang,
-				$color,
-				$position
+			// Free mode — Business Card attributes.
+			$attrs = sprintf(
+				' data-api="%s" data-brand="%s" data-business-name="%s" data-business-type="%s" data-business-info="%s" data-business-url="%s" data-lang="%s" data-color="%s" data-position="%s"',
+				esc_url( (string) get_option( 'demitr_api_url', '' ) ),
+				esc_attr( sanitize_text_field( (string) get_option( 'demitr_brand', get_bloginfo( 'name' ) ) ) ),
+				esc_attr( sanitize_text_field( (string) get_option( 'demitr_brand', get_bloginfo( 'name' ) ) ) ),
+				esc_attr( sanitize_text_field( (string) get_option( 'demitr_business_type', '' ) ) ),
+				esc_attr( sanitize_textarea_field( (string) get_option( 'demitr_business_info', '' ) ) ),
+				esc_url( (string) get_option( 'demitr_business_url', get_home_url() ) ),
+				esc_attr( $this->get_lang() ),
+				esc_attr( $this->sanitize_hex_color( (string) get_option( 'demitr_color', '#7c3aed' ) ) ),
+				esc_attr( $this->sanitize_position( (string) get_option( 'demitr_position', 'bottom-right' ) ) )
 			);
 		}
+
+		return str_replace( ' src=', $attrs . ' src=', $tag );
 	}
 
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	/**
 	 * Check if the widget is enabled and configured.
-	 *
-	 * Active when enabled AND either:
-	 * - An API key is set (paid/managed mode), OR
-	 * - An API URL is set (free/self-hosted mode).
 	 *
 	 * @since 1.0.0
 	 *

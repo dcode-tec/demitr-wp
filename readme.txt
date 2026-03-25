@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Add a GDPR-compliant AI chat widget to your site. Answers visitor questions about your business 24/7.
+Add a GDPR-compliant AI chat widget to your WordPress site that answers visitor questions automatically.
 
 == Description ==
 

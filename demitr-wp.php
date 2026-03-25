@@ -57,7 +57,6 @@ register_activation_hook(
 add_action(
 	'plugins_loaded',
 	static function (): void {
-		load_plugin_textdomain( 'demitr', false, DEMITR_PLUGIN_DIR . 'languages' );
 		( new DemitrWP\Plugin() )->init();
 	}
 );

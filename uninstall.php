@@ -10,7 +10,7 @@
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
-$options = [
+$demitr_options = [
 	'demitr_enabled',
 	'demitr_api_url',
 	'demitr_brand',
@@ -23,8 +23,8 @@ $options = [
 	'demitr_api_key',
 ];
 
-foreach ( $options as $option ) {
-	delete_option( $option );
+foreach ( $demitr_options as $demitr_option ) {
+	delete_option( $demitr_option );
 }
 
 delete_transient( 'demitr_activation_redirect' );
