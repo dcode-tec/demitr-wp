@@ -140,6 +140,30 @@ class Admin {
 			'default'           => 'bottom-right',
 		] );
 
+		register_setting( 'demitr_settings', 'demitr_business_type', [
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '',
+		] );
+
+		register_setting( 'demitr_settings', 'demitr_business_info', [
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_textarea_field',
+			'default'           => '',
+		] );
+
+		register_setting( 'demitr_settings', 'demitr_business_url', [
+			'type'              => 'string',
+			'sanitize_callback' => 'esc_url_raw',
+			'default'           => '',
+		] );
+
+		register_setting( 'demitr_settings', 'demitr_api_key', [
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '',
+		] );
+
 		// ----- Sections -----
 		add_settings_section(
 			'demitr_main',
@@ -152,6 +176,20 @@ class Admin {
 			'demitr_appearance',
 			__( 'Appearance', 'demitr' ),
 			'__return_false',
+			'demitr'
+		);
+
+		add_settings_section(
+			'demitr_business',
+			__( 'Business Card (Free Mode)', 'demitr' ),
+			[ $this, 'render_section_business' ],
+			'demitr'
+		);
+
+		add_settings_section(
+			'demitr_paid',
+			__( 'Paid / Managed Mode', 'demitr' ),
+			[ $this, 'render_section_paid' ],
 			'demitr'
 		);
 
@@ -191,6 +229,32 @@ class Admin {
 			__( 'Widget Position', 'demitr' ),
 			[ $this, 'render_field_position' ],
 			'demitr', 'demitr_appearance'
+		);
+
+		// ----- Fields — Business Card -----
+		add_settings_field( 'demitr_business_type',
+			__( 'Business Type', 'demitr' ),
+			[ $this, 'render_field_business_type' ],
+			'demitr', 'demitr_business'
+		);
+
+		add_settings_field( 'demitr_business_info',
+			__( 'Business Info', 'demitr' ),
+			[ $this, 'render_field_business_info' ],
+			'demitr', 'demitr_business'
+		);
+
+		add_settings_field( 'demitr_business_url',
+			__( 'Business URL', 'demitr' ),
+			[ $this, 'render_field_business_url' ],
+			'demitr', 'demitr_business'
+		);
+
+		// ----- Fields — Paid / Managed -----
+		add_settings_field( 'demitr_api_key',
+			__( 'API Key', 'demitr' ),
+			[ $this, 'render_field_api_key' ],
+			'demitr', 'demitr_paid'
 		);
 	}
 
@@ -334,6 +398,177 @@ class Admin {
 				<?php esc_html_e( 'Bottom left', 'demitr' ); ?>
 			</option>
 		</select>
+		<?php
+	}
+
+	/**
+	 * Render the Business Card section description.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_section_business(): void {
+		?>
+		<p id="demitr-business-section-desc">
+			<?php esc_html_e( 'Tell the AI about your business. These attributes are embedded in the widget script tag so the AI can answer questions about your services, hours, and location.', 'demitr' ); ?>
+		</p>
+		<div id="demitr-managed-notice" style="display:none;">
+			<div class="notice notice-info inline" style="margin:0;">
+				<p>
+					<strong><?php esc_html_e( 'Managed via demitr.ai/dashboard', 'demitr' ); ?></strong><br>
+					<?php esc_html_e( 'Your widget configuration is managed from your demitr.ai dashboard. Business Card fields are not used when an API key is set.', 'demitr' ); ?>
+					<a href="https://demitr.ai/dashboard" target="_blank" rel="noopener noreferrer">
+						<?php esc_html_e( 'Open dashboard →', 'demitr' ); ?>
+					</a>
+				</p>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the Paid / Managed section description.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_section_paid(): void {
+		?>
+		<p>
+			<?php
+			printf(
+				/* translators: %s: link to demitr.ai */
+				esc_html__( 'On a paid Demitr plan? Enter your publishable API key here. The widget will fetch its full configuration from %s — Business Card fields above are ignored.', 'demitr' ),
+				'<a href="https://demitr.ai/dashboard/embed" target="_blank" rel="noopener noreferrer">demitr.ai/dashboard</a>'
+			);
+			?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the Business Type field.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_field_business_type(): void {
+		$value = sanitize_text_field( (string) get_option( 'demitr_business_type', '' ) );
+		?>
+		<input
+			type="text"
+			id="demitr_business_type"
+			name="demitr_business_type"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text demitr-free-field"
+			maxlength="120"
+			placeholder="<?php esc_attr_e( 'e.g. French restaurant in Luxembourg City', 'demitr' ); ?>"
+		>
+		<p class="description demitr-free-field">
+			<?php esc_html_e( 'A brief description of your business type and location. Used in the AI system prompt.', 'demitr' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the Business Info textarea.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_field_business_info(): void {
+		$value = sanitize_textarea_field( (string) get_option( 'demitr_business_info', '' ) );
+		?>
+		<textarea
+			id="demitr_business_info"
+			name="demitr_business_info"
+			class="large-text demitr-free-field"
+			rows="4"
+			maxlength="500"
+			placeholder="<?php esc_attr_e( 'e.g. Farm-to-table. Open Tue-Sat 12-14h, 19-22h. Lunch from €18.', 'demitr' ); ?>"
+		><?php echo esc_textarea( $value ); ?></textarea>
+		<p class="description demitr-free-field">
+			<?php esc_html_e( 'Key facts: opening hours, specialties, pricing, contact info. Max 500 characters.', 'demitr' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the Business URL field.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_field_business_url(): void {
+		$value = esc_url( (string) get_option( 'demitr_business_url', get_home_url() ) );
+		?>
+		<input
+			type="url"
+			id="demitr_business_url"
+			name="demitr_business_url"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text demitr-free-field"
+			placeholder="<?php echo esc_attr( get_home_url() ); ?>"
+		>
+		<p class="description demitr-free-field">
+			<?php esc_html_e( 'Your website URL. Defaults to your WordPress site URL.', 'demitr' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Render the API key field (paid/managed mode).
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function render_field_api_key(): void {
+		$value = sanitize_text_field( (string) get_option( 'demitr_api_key', '' ) );
+		?>
+		<input
+			type="text"
+			id="demitr-api-key"
+			name="demitr_api_key"
+			value="<?php echo esc_attr( $value ); ?>"
+			class="regular-text"
+			placeholder="dm_live_xxxxxxxxxxxxxxxx"
+			autocomplete="off"
+		>
+		<p class="description">
+			<?php esc_html_e( 'Your publishable Demitr API key (starts with dm_live_). Find it in your dashboard under Embed settings.', 'demitr' ); ?>
+		</p>
+		<script>
+		document.addEventListener( 'DOMContentLoaded', function () {
+			var apiKeyField = document.getElementById( 'demitr-api-key' );
+			if ( ! apiKeyField ) return;
+
+			function toggleFreeFields() {
+				var hasPaidKey  = '' !== apiKeyField.value.trim();
+				var freeFields  = document.querySelectorAll( '.demitr-free-field' );
+				var managedNote = document.getElementById( 'demitr-managed-notice' );
+
+				freeFields.forEach( function ( el ) {
+					el.style.display = hasPaidKey ? 'none' : '';
+				} );
+
+				if ( managedNote ) {
+					managedNote.style.display = hasPaidKey ? 'block' : 'none';
+				}
+			}
+
+			// Toggle on input change.
+			apiKeyField.addEventListener( 'input', toggleFreeFields );
+
+			// Apply on page load.
+			toggleFreeFields();
+		} );
+		</script>
 		<?php
 	}
 

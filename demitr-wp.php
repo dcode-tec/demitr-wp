@@ -8,7 +8,7 @@
  * @license    GPL-2.0-or-later
  *
  * @wordpress-plugin
- * Plugin Name:       Demitr — AI Chat Widget
+ * Plugin Name:       Demitr
  * Plugin URI:        https://demitr.ai
  * Description:       GDPR-compliant AI chat widget powered by Mistral (EU-sovereign). One-click setup, consent gate included, no personal data retained.
  * Version:           1.0.0
@@ -44,6 +44,10 @@ register_activation_hook(
 		add_option( 'demitr_color', '#7c3aed' );
 		add_option( 'demitr_position', 'bottom-right' );
 		add_option( 'demitr_enabled', false );
+		add_option( 'demitr_business_type', '' );
+		add_option( 'demitr_business_info', '' );
+		add_option( 'demitr_business_url', get_home_url() );
+		add_option( 'demitr_api_key', '' );
 		set_transient( 'demitr_activation_redirect', true, 30 );
 	}
 );

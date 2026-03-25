@@ -72,6 +72,26 @@ $status   = ( $enabled && '' !== trim( $api_url ) ) ? 'active' : ( $enabled ? 'n
 				</table>
 			</div>
 
+			<div class="demitr-card">
+				<h2 class="demitr-card__title">
+					<span class="dashicons dashicons-store"></span>
+					<?php esc_html_e( 'Business Card', 'demitr' ); ?>
+				</h2>
+				<table class="form-table" role="presentation">
+					<?php do_settings_fields( 'demitr', 'demitr_business' ); ?>
+				</table>
+			</div>
+
+			<div class="demitr-card">
+				<h2 class="demitr-card__title">
+					<span class="dashicons dashicons-admin-network"></span>
+					<?php esc_html_e( 'Paid / Managed Mode', 'demitr' ); ?>
+				</h2>
+				<table class="form-table" role="presentation">
+					<?php do_settings_fields( 'demitr', 'demitr_paid' ); ?>
+				</table>
+			</div>
+
 			<div class="demitr-card demitr-card--full">
 				<h2 class="demitr-card__title">
 					<span class="dashicons dashicons-shield"></span>

@@ -1,32 +1,85 @@
 /**
  * Demitr.ai — Embeddable AI Chat Widget
  *
- * Usage (add before </body>):
+ * Free mode (data-* attributes, no account):
  *   <script src="https://demitr.ai/widget.js"
- *     data-api="https://your-hetzner-vps/api/chat"
+ *     data-api="https://demitr.ai"
  *     data-brand="d-code"
  *     data-lang="en"
  *     data-color="#7c3aed"
+ *     data-position="bottom-right"
+ *     data-business-name="Chez Marcel"
+ *     data-business-type="French restaurant in Luxembourg City"
+ *     data-business-info="Farm-to-table. Open Tue-Sat. Lunch €18."
+ *     data-business-url="https://chezmarcel.lu"
+ *     data-business-lang="fr"
  *   ></script>
+ *
+ * Paid mode (dashboard-managed config via API key):
+ *   <script src="https://demitr.ai/widget.js" data-key="dm_live_abc123xyz"></script>
  *
  * GDPR: consent gate shown before first message. sessionId stored in sessionStorage only.
  * EU AI Act Art. 50: widget discloses AI nature upfront.
  */
-(function () {
+// Capture script ref synchronously BEFORE async — currentScript is null inside async IIFE
+const _demitrScript = document.currentScript ||
+  document.querySelector('script[data-api][src*="demitr"], script[data-key][src*="demitr"]');
+
+(async function () {
   'use strict';
 
-  // ── Config from data attributes ──────────────────────────────────────────
-  const script = document.currentScript;
-  const API_URL = script.dataset.api ?? 'http://localhost:3100/api/chat';
-  const BRAND = script.dataset.brand ?? 'd-code';
-  const LANG = script.dataset.lang ?? 'en';
-  const COLOR = script.dataset.color ?? '#7c3aed';
+  const currentScript = _demitrScript;
 
+  // ── Paid mode detection ───────────────────────────────────────────────────
+  const apiKey = currentScript?.dataset?.key || '';
+  const isPaidMode = !!apiKey;
+
+  // ── Base config from data attributes (may be overridden by paid config) ──
+  const apiBase = currentScript?.dataset?.api || 'https://demitr.ai';
+  let brand        = currentScript?.dataset?.brand        || 'd-code';
+  let lang         = currentScript?.dataset?.lang         || 'en';
+  let color        = currentScript?.dataset?.color        || '#7c3aed';
+  let position     = currentScript?.dataset?.position     || 'bottom-right';
+  let businessName = currentScript?.dataset?.businessName || '';
+  let businessType = currentScript?.dataset?.businessType || '';
+  let businessInfo = currentScript?.dataset?.businessInfo || '';
+  let businessUrl  = currentScript?.dataset?.businessUrl  || '';
+  let businessLang = currentScript?.dataset?.businessLang || lang;
+  let customPrompt = null;
+
+  // ── Paid mode: fetch config from server and override data-* attributes ───
+  let serverConfig = null;
+  let whiteLabel = false;
+  if (isPaidMode) {
+    try {
+      const resp = await fetch(`${apiBase}/api/config/${apiKey}`);
+      if (resp.ok) serverConfig = await resp.json();
+    } catch { /* graceful fallback to data-* attributes */ }
+    if (serverConfig) {
+      brand        = serverConfig.brand        || brand;
+      color        = serverConfig.color        || color;
+      lang         = serverConfig.lang         || lang;
+      position     = serverConfig.position     || position;
+      businessName = serverConfig.businessName || businessName;
+      businessType = serverConfig.businessType || businessType;
+      businessInfo = serverConfig.businessInfo || businessInfo;
+      businessUrl  = serverConfig.businessUrl  || businessUrl;
+      businessLang = serverConfig.businessLang || businessLang;
+      customPrompt = serverConfig.systemPrompt || null;
+      whiteLabel   = serverConfig.features?.white_label === true;
+    }
+  }
+
+  // ── Position helpers ──────────────────────────────────────────────────────
+  const isLeft = position === 'bottom-left';
+  const hSide  = isLeft ? 'left' : 'right';
+
+  // ── i18n ─────────────────────────────────────────────────────────────────
   const T = {
     en: {
       trigger: 'Chat with us',
       title: 'AI Assistant',
-      subtitle: `${BRAND} · AI-powered`,
+      subtitle: `${brand} · AI-powered`,
       placeholder: 'Ask a question…',
       send: 'Send',
       consent_title: 'AI Assistant',
@@ -40,7 +93,7 @@
     fr: {
       trigger: 'Discuter',
       title: 'Assistant IA',
-      subtitle: `${BRAND} · IA`,
+      subtitle: `${brand} · IA`,
       placeholder: 'Posez votre question…',
       send: 'Envoyer',
       consent_title: 'Assistant IA',
@@ -53,7 +106,7 @@
     },
   };
 
-  const i18n = T[LANG] ?? T.en;
+  const i18n = T[lang] ?? T.en;
 
   // ── State ────────────────────────────────────────────────────────────────
   let open = false;
@@ -81,8 +134,8 @@
   style.textContent = `
     #demitr-root * { box-sizing: border-box; font-family: system-ui, sans-serif; }
     #demitr-trigger {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9998;
-      background: ${COLOR}; color: #fff; border: none; border-radius: 50px;
+      position: fixed; bottom: 24px; ${hSide}: 24px; z-index: 9998;
+      background: ${color}; color: #fff; border: none; border-radius: 50px;
       padding: 12px 20px; font-size: 14px; font-weight: 600;
       cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,.25);
       display: flex; align-items: center; gap: 8px;
@@ -90,8 +143,8 @@
     }
     #demitr-trigger:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,0,0,.3); }
     #demitr-window {
-      position: fixed; bottom: 90px; right: 24px; z-index: 9999;
-      width: 360px; max-height: 560px;
+      position: fixed; bottom: 90px; ${hSide}: 24px; z-index: 9999;
+      width: 380px; max-height: 620px;
       background: #fff; border-radius: 16px;
       box-shadow: 0 8px 40px rgba(0,0,0,.18);
       display: flex; flex-direction: column; overflow: hidden;
@@ -99,7 +152,7 @@
     }
     #demitr-window.demitr-hidden { opacity: 0; transform: translateY(12px); pointer-events: none; }
     #demitr-header {
-      background: ${COLOR}; color: #fff;
+      background: ${color}; color: #fff;
       padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
     }
     #demitr-header h3 { margin: 0; font-size: 15px; font-weight: 700; }
@@ -115,7 +168,7 @@
       max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.5;
     }
     .demitr-msg.user {
-      align-self: flex-end; background: ${COLOR}; color: #fff; border-bottom-right-radius: 4px;
+      align-self: flex-end; background: ${color}; color: #fff; border-bottom-right-radius: 4px;
     }
     .demitr-msg.assistant {
       align-self: flex-start; background: #f3f4f6; color: #111; border-bottom-left-radius: 4px;
@@ -131,9 +184,9 @@
       padding: 8px 12px; font-size: 13.5px; outline: none; resize: none;
       max-height: 80px; min-height: 36px;
     }
-    #demitr-input:focus { border-color: ${COLOR}; }
+    #demitr-input:focus { border-color: ${color}; }
     #demitr-send {
-      background: ${COLOR}; color: #fff; border: none; border-radius: 8px;
+      background: ${color}; color: #fff; border: none; border-radius: 8px;
       padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
       white-space: nowrap;
     }
@@ -142,19 +195,31 @@
     #demitr-consent {
       position: absolute; inset: 0; background: #fff; z-index: 10;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      padding: 28px; text-align: center; gap: 16px;
+      padding: 32px 24px; text-align: center; gap: 16px; overflow-y: auto;
     }
-    #demitr-consent h4 { margin: 0; font-size: 17px; font-weight: 700; color: #111; }
-    #demitr-consent p { margin: 0; font-size: 13px; color: #555; line-height: 1.6; }
+    #demitr-consent h4 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
+    #demitr-consent p { margin: 0; font-size: 13.5px; color: #555; line-height: 1.6; }
     #demitr-consent-accept {
-      background: ${COLOR}; color: #fff; border: none; border-radius: 8px;
-      padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;
+      background: ${color}; color: #fff; border: none; border-radius: 10px;
+      padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
+      flex-shrink: 0; margin-top: 8px;
     }
+    #demitr-consent-accept:hover { filter: brightness(1.1); }
     #demitr-consent-decline {
-      background: none; border: none; color: #888; font-size: 12px; cursor: pointer; text-decoration: underline;
+      background: none; border: none; color: #888; font-size: 13px; cursor: pointer; text-decoration: underline;
+      flex-shrink: 0; padding: 4px;
     }
+    #demitr-powered {
+      text-align: center; padding: 6px 12px; font-size: 10px; color: #94a3b8;
+      border-top: 1px solid #f1f5f9; background: #fafafa;
+      border-radius: 0 0 16px 16px;
+    }
+    #demitr-powered a {
+      color: #7c3aed; text-decoration: none; font-weight: 600;
+    }
+    #demitr-powered a:hover { text-decoration: underline; }
     @media (max-width: 400px) {
-      #demitr-window { width: calc(100vw - 32px); right: 16px; }
+      #demitr-window { width: calc(100vw - 32px); ${hSide}: 16px; }
     }
   `;
   document.head.appendChild(style);
@@ -206,6 +271,16 @@
   chatWindow.appendChild(header);
   chatWindow.appendChild(messages);
   chatWindow.appendChild(inputRow);
+
+  // "Powered by dcode" badge — shown on free tier, hidden when white_label is true
+  if (!whiteLabel) {
+    const powered = el('div', { id: 'demitr-powered' });
+    const link = el('a', { href: 'https://demitr.ai', target: '_blank', rel: 'noopener' }, 'demitr.ai');
+    powered.appendChild(document.createTextNode('Powered by '));
+    powered.appendChild(link);
+    chatWindow.appendChild(powered);
+  }
+
   if (!consentGiven) chatWindow.appendChild(consent);
 
   root.appendChild(trigger);
@@ -258,10 +333,21 @@
     messages.scrollTop = messages.scrollHeight;
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${apiBase}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, message: text, consentGiven: true }),
+        body: JSON.stringify({
+          sessionId,
+          message: text,
+          consentGiven: true,
+          ...(isPaidMode ? { apiKey } : {
+            businessName: serverConfig?.businessName || businessName,
+            businessType: serverConfig?.businessType || businessType,
+            businessInfo: serverConfig?.businessInfo || businessInfo,
+            businessUrl:  serverConfig?.businessUrl  || businessUrl,
+            businessLang: serverConfig?.businessLang || businessLang,
+          }),
+        }),
       });
 
       const data = await res.json();

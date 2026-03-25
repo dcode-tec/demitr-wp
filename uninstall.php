@@ -17,6 +17,10 @@ $options = [
 	'demitr_lang',
 	'demitr_color',
 	'demitr_position',
+	'demitr_business_type',
+	'demitr_business_info',
+	'demitr_business_url',
+	'demitr_api_key',
 ];
 
 foreach ( $options as $option ) {
