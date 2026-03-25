@@ -1,0 +1,16 @@
+/.wordpress-org
+/.git
+/.github
+/.claude
+/node_modules
+/vendor
+/tests
+/docs
+/.distignore
+/.gitignore
+/phpcs.xml
+/composer.json
+/composer.lock
+/CLAUDE.md
+/CHANGELOG.md
+/README.md
