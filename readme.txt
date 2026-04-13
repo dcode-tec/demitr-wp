@@ -3,7 +3,7 @@ Contributors: dcodetechnologies
 Tags: chatbot, ai, gdpr, chat widget, live chat
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -41,7 +41,7 @@ This plugin sends chat messages to the Demitr API for AI processing. You configu
 **Data sent:** visitor message (PII tokenized), session ID (random UUID), business context, consent flag.
 **Data NOT sent:** IP address, cookies, personal identifiers, browsing history.
 
-You can self-host the API for full data control. See [GitHub](https://github.com/dcode-tec/demitr.ai).
+You can self-host the API for full data control by configuring the API endpoint URL in the plugin settings.
 
 == Installation ==
 
@@ -68,7 +68,7 @@ Mistral Small by Mistral AI (Paris, France). EU-sovereign — no international d
 
 = Can I self-host the API? =
 
-Yes. The API is open source on GitHub. Run it on your own server for full control.
+Yes. Set the API endpoint URL in the plugin settings to point to your own Demitr API server instead of demitr.ai.
 
 = Does it work with caching plugins? =
 
@@ -83,6 +83,10 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 
 == Changelog ==
 
+= 1.0.1 =
+* Replaced inline `<script>` in admin settings with `wp_add_inline_script()` (WordPress.org review fix)
+* Added opt-in attribution setting — "Powered by demitr.ai" link is now off by default (Guideline 10)
+
 = 1.0.0 =
 * Initial release
 * AI chat widget powered by Mistral (EU-sovereign)
@@ -96,6 +100,9 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 * Clean uninstall
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+WordPress.org review fixes: inline script moved to `wp_add_inline_script()`, attribution link now opt-in.
 
 = 1.0.0 =
 First release. Install, add your business info, enable the widget.

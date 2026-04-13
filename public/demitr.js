@@ -46,6 +46,10 @@ const _demitrScript = document.currentScript ||
   let businessUrl  = currentScript?.dataset?.businessUrl  || '';
   let businessLang = currentScript?.dataset?.businessLang || lang;
   let customPrompt = null;
+  // "Powered by demitr.ai" badge — opt-in via data-show-powered-by="1" (defaults to OFF)
+  // for free-tier embeds. This satisfies wordpress.org Guideline 10 (no external credits
+  // on public sites without explicit user permission).
+  const showPoweredBy = currentScript?.dataset?.showPoweredBy === '1';
 
   // ── Paid mode: fetch config from server and override data-* attributes ───
   let serverConfig = null;
@@ -108,10 +112,25 @@ const _demitrScript = document.currentScript ||
 
   const i18n = T[lang] ?? T.en;
 
+  // ── UUID helper (Safari < 15.4 fallback) ─────────────────────────────────
+  function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    // Manual v4 UUID fallback
+    const bytes = new Uint8Array(16);
+    (crypto || window.crypto || window.msCrypto).getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+  }
+
   // ── State ────────────────────────────────────────────────────────────────
   let open = false;
   let consentGiven = sessionStorage.getItem('demitr_consent') === '1';
-  let sessionId = sessionStorage.getItem('demitr_sid') ?? crypto.randomUUID();
+  let sessionId = sessionStorage.getItem('demitr_sid') ?? generateUUID();
+  let lastUserText = '';
   sessionStorage.setItem('demitr_sid', sessionId);
 
   // ── DOM helpers ──────────────────────────────────────────────────────────
@@ -272,8 +291,12 @@ const _demitrScript = document.currentScript ||
   chatWindow.appendChild(messages);
   chatWindow.appendChild(inputRow);
 
-  // "Powered by dcode" badge — shown on free tier, hidden when white_label is true
-  if (!whiteLabel) {
+  // "Powered by demitr.ai" badge — opt-in only.
+  // Paid tier: hidden when whiteLabel feature is on.
+  // Free tier: shown only when site owner explicitly sets data-show-powered-by="1"
+  // (default OFF — required for wordpress.org Guideline 10 compliance).
+  const shouldShowBadge = isPaidMode ? !whiteLabel : showPoweredBy;
+  if (shouldShowBadge) {
     const powered = el('div', { id: 'demitr-powered' });
     const link = el('a', { href: 'https://demitr.ai', target: '_blank', rel: 'noopener' }, 'demitr.ai');
     powered.appendChild(document.createTextNode('Powered by '));
@@ -286,6 +309,22 @@ const _demitrScript = document.currentScript ||
   root.appendChild(trigger);
   root.appendChild(chatWindow);
   document.body.appendChild(root);
+
+  // ── Markdown renderer (XSS-safe) ─────────────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape HTML first to prevent XSS
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    // Apply markdown transforms
+    return escaped
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\n/g, '<br>');
+  }
 
   // ── Show AI disclosure on first open ─────────────────────────────────────
   function addSystemMsg(text) {
@@ -306,6 +345,11 @@ const _demitrScript = document.currentScript ||
   trigger.addEventListener('click', toggleWindow);
   closeBtn.addEventListener('click', toggleWindow);
 
+  // ── Escape key to close ─────────────────────────────────────────────────
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && open) toggleWindow();
+  });
+
   consentAccept.addEventListener('click', () => {
     consentGiven = true;
     sessionStorage.setItem('demitr_consent', '1');
@@ -316,15 +360,21 @@ const _demitrScript = document.currentScript ||
 
   consentDecline.addEventListener('click', toggleWindow);
 
-  async function sendMessage() {
-    const text = input.value.trim();
+  async function sendMessage(retryText) {
+    const text = retryText || input.value.trim();
     if (!text || !consentGiven) return;
 
-    // Append user bubble
-    const userMsg = el('div', { class: 'demitr-msg user' }, text);
-    messages.appendChild(userMsg);
-    input.value = '';
+    lastUserText = text;
+
+    // Append user bubble (skip on retry — already shown)
+    if (!retryText) {
+      const userMsg = el('div', { class: 'demitr-msg user' }, text);
+      messages.appendChild(userMsg);
+      input.value = '';
+    }
+
     sendBtn.disabled = true;
+    messages.setAttribute('aria-busy', 'true');
     messages.scrollTop = messages.scrollHeight;
 
     // Thinking indicator
@@ -355,19 +405,33 @@ const _demitrScript = document.currentScript ||
 
       if (data.error) throw new Error(data.error);
 
-      const reply = el('div', { class: 'demitr-msg assistant' }, data.reply);
+      // Render markdown in assistant reply (HTML-escaped first to prevent XSS)
+      const reply = el('div', { class: 'demitr-msg assistant' });
+      reply.textContent = ''; // safe baseline
+      const safeHTML = renderMarkdown(data.reply);
+      reply.insertAdjacentHTML('beforeend', safeHTML);
       messages.appendChild(reply);
     } catch {
       thinking.remove();
-      const errMsg = el('div', { class: 'demitr-msg system' }, i18n.error);
-      messages.appendChild(errMsg);
+      const errWrap = el('div', { class: 'demitr-msg system' });
+      errWrap.appendChild(document.createTextNode(i18n.error + ' '));
+      const retryBtn = el('button', {
+        style: {
+          background: 'none', border: 'none', color: color, cursor: 'pointer',
+          textDecoration: 'underline', fontSize: '11px', padding: '0',
+        },
+        onClick: () => { errWrap.remove(); sendMessage(lastUserText); },
+      }, lang === 'fr' ? 'Réessayer' : 'Try again');
+      errWrap.appendChild(retryBtn);
+      messages.appendChild(errWrap);
     } finally {
       sendBtn.disabled = false;
+      messages.removeAttribute('aria-busy');
       messages.scrollTop = messages.scrollHeight;
     }
   }
 
-  sendBtn.addEventListener('click', sendMessage);
+  sendBtn.addEventListener('click', () => sendMessage());
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

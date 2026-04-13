@@ -79,11 +79,13 @@ class Plugin {
 			return $tag;
 		}
 
-		$api_key = sanitize_text_field( (string) get_option( 'demitr_api_key', '' ) );
+		$api_key           = sanitize_text_field( (string) get_option( 'demitr_api_key', '' ) );
+		$show_attribution  = (bool) get_option( 'demitr_show_attribution', false );
+		$attribution_attr  = $show_attribution ? ' data-show-powered-by="1"' : '';
 
 		if ( '' !== $api_key ) {
 			// Paid mode — only data-key needed.
-			$attrs = sprintf( ' data-key="%s"', esc_attr( $api_key ) );
+			$attrs = sprintf( ' data-key="%s"', esc_attr( $api_key ) ) . $attribution_attr;
 		} else {
 			// Free mode — Business Card attributes.
 			$attrs = sprintf(
@@ -97,7 +99,7 @@ class Plugin {
 				esc_attr( $this->get_lang() ),
 				esc_attr( $this->sanitize_hex_color( (string) get_option( 'demitr_color', '#7c3aed' ) ) ),
 				esc_attr( $this->sanitize_position( (string) get_option( 'demitr_position', 'bottom-right' ) ) )
-			);
+			) . $attribution_attr;
 		}
 
 		return str_replace( ' src=', $attrs . ' src=', $tag );

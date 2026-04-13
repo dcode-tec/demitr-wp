@@ -21,6 +21,7 @@ $demitr_options = [
 	'demitr_business_info',
 	'demitr_business_url',
 	'demitr_api_key',
+	'demitr_show_attribution',
 ];
 
 foreach ( $demitr_options as $demitr_option ) {

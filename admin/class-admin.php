@@ -91,6 +91,28 @@ class Admin {
 				}
 			});'
 		);
+
+		// Register an inline-only handle for the API key toggle script.
+		// Passing `false` as the src creates a dependency-only handle — no <script src> tag,
+		// just a hook for wp_add_inline_script() to attach the toggle behavior.
+		wp_register_script( 'demitr-admin-toggle', false, [], DEMITR_VERSION, true );
+		wp_enqueue_script( 'demitr-admin-toggle' );
+		wp_add_inline_script(
+			'demitr-admin-toggle',
+			'document.addEventListener("DOMContentLoaded", function () {
+				var apiKeyField = document.getElementById("demitr-api-key");
+				if (!apiKeyField) return;
+				function toggleFreeFields() {
+					var hasPaidKey = "" !== apiKeyField.value.trim();
+					var freeFields = document.querySelectorAll(".demitr-free-field");
+					var managedNote = document.getElementById("demitr-managed-notice");
+					freeFields.forEach(function (el) { el.style.display = hasPaidKey ? "none" : ""; });
+					if (managedNote) managedNote.style.display = hasPaidKey ? "block" : "none";
+				}
+				apiKeyField.addEventListener("input", toggleFreeFields);
+				toggleFreeFields();
+			});'
+		);
 	}
 
 	// ── Settings API ──────────────────────────────────────────────────────────
@@ -162,6 +184,13 @@ class Admin {
 			'type'              => 'string',
 			'sanitize_callback' => 'sanitize_text_field',
 			'default'           => '',
+		] );
+
+		// Opt-in attribution — disabled by default (wordpress.org Guideline 10).
+		register_setting( 'demitr_settings', 'demitr_show_attribution', [
+			'type'              => 'boolean',
+			'sanitize_callback' => 'rest_sanitize_boolean',
+			'default'           => false,
 		] );
 
 		// ----- Sections -----
@@ -255,6 +284,12 @@ class Admin {
 			__( 'API Key', 'demitr' ),
 			[ $this, 'render_field_api_key' ],
 			'demitr', 'demitr_paid'
+		);
+
+		add_settings_field( 'demitr_show_attribution',
+			__( 'Show Attribution', 'demitr' ),
+			[ $this, 'render_field_show_attribution' ],
+			'demitr', 'demitr_main'
 		);
 	}
 
@@ -543,32 +578,30 @@ class Admin {
 		<p class="description">
 			<?php esc_html_e( 'Your publishable Demitr API key (starts with dm_live_). Find it in your dashboard under Embed settings.', 'demitr' ); ?>
 		</p>
-		<script>
-		document.addEventListener( 'DOMContentLoaded', function () {
-			var apiKeyField = document.getElementById( 'demitr-api-key' );
-			if ( ! apiKeyField ) return;
+		<?php
+		// JS toggle is enqueued via wp_add_inline_script() in enqueue_assets() — no inline <script> tag here.
+	}
 
-			function toggleFreeFields() {
-				var hasPaidKey  = '' !== apiKeyField.value.trim();
-				var freeFields  = document.querySelectorAll( '.demitr-free-field' );
-				var managedNote = document.getElementById( 'demitr-managed-notice' );
-
-				freeFields.forEach( function ( el ) {
-					el.style.display = hasPaidKey ? 'none' : '';
-				} );
-
-				if ( managedNote ) {
-					managedNote.style.display = hasPaidKey ? 'block' : 'none';
-				}
-			}
-
-			// Toggle on input change.
-			apiKeyField.addEventListener( 'input', toggleFreeFields );
-
-			// Apply on page load.
-			toggleFreeFields();
-		} );
-		</script>
+	/**
+	 * Render the opt-in attribution checkbox.
+	 *
+	 * Off by default — required for wordpress.org Guideline 10 compliance
+	 * (no external links/credits on the public site without explicit user permission).
+	 *
+	 * @since 1.0.1
+	 *
+	 * @return void
+	 */
+	public function render_field_show_attribution(): void {
+		$enabled = (bool) get_option( 'demitr_show_attribution', false );
+		?>
+		<label for="demitr_show_attribution">
+			<input type="checkbox" id="demitr_show_attribution" name="demitr_show_attribution" value="1" <?php checked( $enabled ); ?>>
+			<?php esc_html_e( 'Show "Powered by demitr.ai" link in the chat widget', 'demitr' ); ?>
+		</label>
+		<p class="description">
+			<?php esc_html_e( 'Off by default. Enable to display a small attribution link in the chat widget footer.', 'demitr' ); ?>
+		</p>
 		<?php
 	}
 
