@@ -11,7 +11,7 @@
  * Plugin Name:       Demitr
  * Plugin URI:        https://demitr.ai
  * Description:       GDPR-compliant AI chat widget powered by Mistral (EU-sovereign). One-click setup, consent gate included, no personal data retained.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.4
  * Requires PHP:      7.4
  * Author:            dcode technologies
@@ -24,7 +24,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'DEMITR_VERSION', '1.0.1' );
+define( 'DEMITR_VERSION', '1.0.2' );
 define( 'DEMITR_PLUGIN_FILE', __FILE__ );
 define( 'DEMITR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'DEMITR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

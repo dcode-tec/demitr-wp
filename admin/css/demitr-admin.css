@@ -2,6 +2,26 @@
  * Demitr WP — Admin Settings Page Styles
  */
 
+/* ── Managed-mode notice (toggled by inline JS via wp_add_inline_script) ────── */
+
+.demitr-managed-notice {
+	display: none;
+}
+
+.demitr-managed-notice.is-visible {
+	display: block;
+}
+
+.demitr-notice-compact {
+	margin: 0;
+}
+
+/* Utility class toggled by the API-key inline script — hides free-tier
+ * Business Card fields when an API key is set (paid/managed mode). */
+.demitr-hidden {
+	display: none !important;
+}
+
 /* ── Layout ────────────────────────────────────────────────────────────────── */
 
 .demitr-wrap {

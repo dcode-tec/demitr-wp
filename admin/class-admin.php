@@ -106,8 +106,8 @@ class Admin {
 					var hasPaidKey = "" !== apiKeyField.value.trim();
 					var freeFields = document.querySelectorAll(".demitr-free-field");
 					var managedNote = document.getElementById("demitr-managed-notice");
-					freeFields.forEach(function (el) { el.style.display = hasPaidKey ? "none" : ""; });
-					if (managedNote) managedNote.style.display = hasPaidKey ? "block" : "none";
+					freeFields.forEach(function (el) { el.classList.toggle("demitr-hidden", hasPaidKey); });
+					if (managedNote) managedNote.classList.toggle("is-visible", hasPaidKey);
 				}
 				apiKeyField.addEventListener("input", toggleFreeFields);
 				toggleFreeFields();
@@ -448,8 +448,8 @@ class Admin {
 		<p id="demitr-business-section-desc">
 			<?php esc_html_e( 'Tell the AI about your business. These attributes are embedded in the widget script tag so the AI can answer questions about your services, hours, and location.', 'demitr' ); ?>
 		</p>
-		<div id="demitr-managed-notice" style="display:none;">
-			<div class="notice notice-info inline" style="margin:0;">
+		<div id="demitr-managed-notice" class="demitr-managed-notice">
+			<div class="notice notice-info inline demitr-notice-compact">
 				<p>
 					<strong><?php esc_html_e( 'Managed via demitr.ai/dashboard', 'demitr' ); ?></strong><br>
 					<?php esc_html_e( 'Your widget configuration is managed from your demitr.ai dashboard. Business Card fields are not used when an API key is set.', 'demitr' ); ?>

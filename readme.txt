@@ -3,7 +3,7 @@ Contributors: dcodetechnologies
 Tags: chatbot, ai, gdpr, chat widget, live chat
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -83,9 +83,15 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 
 == Changelog ==
 
+= 1.0.2 =
+* Renamed main plugin file from `demitr-wp.php` to `demitr.php` to match the WordPress.org slug convention
+* Removed remaining inline `style=""` attributes from admin notice — moved to admin CSS class
+* JS now toggles classes via `classList.toggle()` instead of writing to `element.style.display`
+
 = 1.0.1 =
 * Replaced inline `<script>` in admin settings with `wp_add_inline_script()` (WordPress.org review fix)
 * Added opt-in attribution setting — "Powered by demitr.ai" link is now off by default (Guideline 10)
+* Fixed broken GitHub URL in readme.txt
 
 = 1.0.0 =
 * Initial release
@@ -100,6 +106,9 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 * Clean uninstall
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Main plugin file renamed to match the slug convention (demitr.php). On a clean WordPress install you can simply install fresh; existing installs from a previous unreleased build should reactivate after updating.
 
 = 1.0.1 =
 WordPress.org review fixes: inline script moved to `wp_add_inline_script()`, attribution link now opt-in.
