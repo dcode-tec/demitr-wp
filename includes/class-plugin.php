@@ -128,18 +128,25 @@ class Plugin {
 	/**
 	 * Resolve the widget language from settings, falling back to WP locale.
 	 *
-	 * @since 1.0.0
+	 * Supports: en, fr, de, nl, it, es. Auto mode maps the WordPress locale
+	 * prefix to the closest supported language.
 	 *
-	 * @return string 'en' or 'fr'
+	 * @since 1.0.0
+	 * @since 1.1.0 Added de, nl, it, es.
+	 *
+	 * @return string One of: en, fr, de, nl, it, es.
 	 */
 	private function get_lang(): string {
-		$saved = (string) get_option( 'demitr_lang', 'auto' );
+		$supported = [ 'en', 'fr', 'de', 'nl', 'it', 'es' ];
+		$saved     = (string) get_option( 'demitr_lang', 'auto' );
 
-		if ( 'auto' === $saved ) {
-			return str_starts_with( get_locale(), 'fr' ) ? 'fr' : 'en';
+		if ( 'auto' !== $saved ) {
+			return in_array( $saved, $supported, true ) ? $saved : 'en';
 		}
 
-		return in_array( $saved, [ 'en', 'fr' ], true ) ? $saved : 'en';
+		// Auto-detect from WordPress locale (e.g. 'de_DE' → 'de', 'nl_NL' → 'nl').
+		$locale_prefix = substr( get_locale(), 0, 2 );
+		return in_array( $locale_prefix, $supported, true ) ? $locale_prefix : 'en';
 	}
 
 	/**

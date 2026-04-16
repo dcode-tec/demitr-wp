@@ -3,7 +3,7 @@ Contributors: dcodetechnologies
 Tags: chatbot, ai, gdpr, chat widget, live chat
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 1.0.2
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -20,7 +20,7 @@ Demitr adds an AI chat widget to your WordPress site. The AI answers visitor que
 * **GDPR by design** — Consent gate, no cookies, no persistent storage, PII anonymization
 * **EU-sovereign AI** — Powered by Mistral (Paris). Hosted on Hetzner (Germany). Data stays in the EU
 * **30-second setup** — Install, enter your info, enable. Done
-* **Bilingual** — English and French. AI responds in the visitor's language
+* **6 European languages** — English, French, German, Dutch, Italian, Spanish. AI responds in the visitor's language
 * **Customizable** — Brand name, accent color, position, language
 
 = Two Modes =
@@ -105,7 +105,17 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 * Widget position setting
 * Clean uninstall
 
+= 1.1.0 =
+* Widget upgraded: CSP-safe stylesheet (constructable stylesheet with fallback), hex color validation, SSE streaming responses
+* 6 European languages: English, French, German, Dutch, Italian, Spanish (widget UI + admin language selector)
+* Auto-detect language from WordPress locale for DE, NL, IT, ES (not just FR)
+* Level 3 PII anonymization: 8 regex patterns (EMAIL, URL, IBAN, CREDIT with Luhn, SSN, DOB, PHONE, ADDRESS) + NLP for names, places, organizations
+* "Powered by demitr.ai" badge remains opt-in (Guideline 10 compliant)
+
 == Upgrade Notice ==
+
+= 1.1.0 =
+Major widget upgrade: 6 European languages, SSE streaming, CSP-safe styles, Level 3 PII anonymization. Update to get the latest widget features.
 
 = 1.0.2 =
 Main plugin file renamed to match the slug convention (demitr.php). On a clean WordPress install you can simply install fresh; existing installs from a previous unreleased build should reactivate after updating.

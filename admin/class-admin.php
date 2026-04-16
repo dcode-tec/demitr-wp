@@ -359,9 +359,21 @@ class Admin {
 			<option value="fr" <?php selected( $lang, 'fr' ); ?>>
 				<?php esc_html_e( 'Français', 'demitr' ); ?>
 			</option>
+			<option value="de" <?php selected( $lang, 'de' ); ?>>
+				<?php esc_html_e( 'Deutsch', 'demitr' ); ?>
+			</option>
+			<option value="nl" <?php selected( $lang, 'nl' ); ?>>
+				<?php esc_html_e( 'Nederlands', 'demitr' ); ?>
+			</option>
+			<option value="it" <?php selected( $lang, 'it' ); ?>>
+				<?php esc_html_e( 'Italiano', 'demitr' ); ?>
+			</option>
+			<option value="es" <?php selected( $lang, 'es' ); ?>>
+				<?php esc_html_e( 'Español', 'demitr' ); ?>
+			</option>
 		</select>
 		<p class="description">
-			<?php esc_html_e( '"Auto" detects French locale automatically; everything else defaults to English.', 'demitr' ); ?>
+			<?php esc_html_e( '"Auto" detects the WordPress locale and maps to the closest supported language (EN, FR, DE, NL, IT, ES).', 'demitr' ); ?>
 		</p>
 		<?php
 	}
@@ -617,7 +629,7 @@ class Admin {
 	 * @return string
 	 */
 	public function sanitize_lang( string $value ): string {
-		return in_array( $value, [ 'auto', 'en', 'fr' ], true ) ? $value : 'auto';
+		return in_array( $value, [ 'auto', 'en', 'fr', 'de', 'nl', 'it', 'es' ], true ) ? $value : 'auto';
 	}
 
 	/**
