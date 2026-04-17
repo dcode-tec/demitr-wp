@@ -3,7 +3,7 @@ Contributors: dcodetechnologies
 Tags: chatbot, ai, gdpr, chat widget, live chat
 Requires at least: 6.4
 Tested up to: 6.9
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -105,6 +105,18 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 * Widget position setting
 * Clean uninstall
 
+= 1.2.0 =
+* Widget redesign: SVG icons, bigger chat window, warm welcome messages, consent-only view
+* Auto-language detection: widget reads page language from html lang attribute and browser navigator.language
+* SSE streaming with LLM fallback chain: Mistral Small + 3 free fallback models
+* Anti-injection hardening: explicit security directives in every system prompt
+* Lead capture AI: natural contact collection prompt for Pro customers
+* PII anonymization Level 3: 8 regex + NLP (names, addresses, IBANs, credit cards, DOBs)
+* Installation tracking: widget pings server on load for domain analytics
+* Persistent chat history via localStorage (survives refresh and tab close)
+* Clear chat button with localized label in all 6 languages
+* Google Fonts: DM Sans + Instrument Sans
+
 = 1.1.0 =
 * Widget upgraded: CSP-safe stylesheet (constructable stylesheet with fallback), hex color validation, SSE streaming responses
 * 6 European languages: English, French, German, Dutch, Italian, Spanish (widget UI + admin language selector)
@@ -114,8 +126,11 @@ Yes. The widget runs client-side. Compatible with all caching plugins.
 
 == Upgrade Notice ==
 
+= 1.2.0 =
+Widget redesign, auto-language detection, LLM fallback chain, anti-injection security, lead capture AI, installation tracking, persistent chat history. Recommended update.
+
 = 1.1.0 =
-Major widget upgrade: 6 European languages, SSE streaming, CSP-safe styles, Level 3 PII anonymization. Update to get the latest widget features.
+Major widget upgrade: 6 European languages, SSE streaming, CSP-safe styles, Level 3 PII anonymization.
 
 = 1.0.2 =
 Main plugin file renamed to match the slug convention (demitr.php). On a clean WordPress install you can simply install fresh; existing installs from a previous unreleased build should reactivate after updating.
