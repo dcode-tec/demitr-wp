@@ -55,7 +55,22 @@ const _demitrScript = document.currentScript ||
   // \u2500\u2500 Base config from data attributes (may be overridden by paid config) \u2500\u2500
   const apiBase = currentScript?.dataset?.api || 'https://demitr.ai';
   let brand        = currentScript?.dataset?.brand        || 'd-code';
-  let lang         = currentScript?.dataset?.lang         || 'en';
+  // Language auto-detect: data-lang attribute > html lang attribute > browser language > 'en'
+  const SUPPORTED_LANGS = ['en', 'fr', 'de', 'nl', 'it', 'es'];
+  function detectLang() {
+    // 1. Explicit data-lang attribute (highest priority)
+    const dataLang = currentScript?.dataset?.lang;
+    if (dataLang && SUPPORTED_LANGS.includes(dataLang)) return dataLang;
+    // 2. Host page <html lang="xx"> attribute
+    const htmlLang = (document.documentElement.lang || '').slice(0, 2).toLowerCase();
+    if (htmlLang && SUPPORTED_LANGS.includes(htmlLang)) return htmlLang;
+    // 3. Browser navigator.language
+    const navLang = (navigator.language || '').slice(0, 2).toLowerCase();
+    if (navLang && SUPPORTED_LANGS.includes(navLang)) return navLang;
+    // 4. Default
+    return 'en';
+  }
+  let lang = detectLang();
   let color        = safeColor(currentScript?.dataset?.color);
   let position     = currentScript?.dataset?.position     || 'bottom-right';
   let businessName = currentScript?.dataset?.businessName || '';
@@ -80,7 +95,16 @@ const _demitrScript = document.currentScript ||
     if (serverConfig) {
       brand        = serverConfig.brand        || brand;
       color        = safeColor(serverConfig.color || color);
-      lang         = serverConfig.lang         || lang;
+      // Server lang is the customer's DEFAULT — only use it if auto-detect
+      // found nothing (i.e., lang is still 'en' from the fallback AND the
+      // user didn't explicitly set data-lang). Auto-detected language from
+      // <html lang> or navigator.language takes priority over the server's
+      // default, because the VISITOR's language matters more than the
+      // customer's preferred language.
+      if (!currentScript?.dataset?.lang && lang === 'en') {
+        const serverLang = serverConfig.lang || serverConfig.businessLang || '';
+        if (serverLang && SUPPORTED_LANGS.includes(serverLang)) lang = serverLang;
+      }
       position     = serverConfig.position     || position;
       businessName = serverConfig.businessName || businessName;
       businessType = serverConfig.businessType || businessType;
@@ -88,7 +112,7 @@ const _demitrScript = document.currentScript ||
       businessUrl  = serverConfig.businessUrl  || businessUrl;
       businessLang = serverConfig.businessLang || businessLang;
       customPrompt = serverConfig.systemPrompt || null;
-      whiteLabel   = serverConfig.features?.white_label === true;
+      whiteLabel   = serverConfig.whiteLabel === true;
     }
   }
 
@@ -107,10 +131,11 @@ const _demitrScript = document.currentScript ||
       consent_body: `This assistant is powered by artificial intelligence. To continue, you agree that your messages will be processed by our AI to answer your questions. No personal data is stored after your session ends.`,
       consent_cta: 'I understand \u2014 start chat',
       consent_decline: 'No thanks',
-      ai_disclosure: '\u{1F916} You are chatting with an AI, not a human.',
+      ai_disclosure: 'Welcome! This is an AI assistant. How can we help you today?',
       thinking: 'Thinking\u2026',
       error: 'Something went wrong. Please try again.',
       retry: 'Try again',
+      clear: 'Clear chat',
     },
     fr: {
       trigger: 'Discuter',
@@ -122,10 +147,11 @@ const _demitrScript = document.currentScript ||
       consent_body: `Cet assistant est aliment\u00e9 par l'intelligence artificielle. En continuant, vous acceptez que vos messages soient trait\u00e9s par notre IA pour r\u00e9pondre \u00e0 vos questions. Aucune donn\u00e9e personnelle n'est conserv\u00e9e apr\u00e8s la fin de votre session.`,
       consent_cta: 'J\'accepte \u2014 d\u00e9marrer',
       consent_decline: 'Non merci',
-      ai_disclosure: '\u{1F916} Vous discutez avec une IA, pas un humain.',
+      ai_disclosure: 'Bienvenue ! Je suis un assistant IA. Comment puis-je vous aider ?',
       thinking: 'R\u00e9flexion\u2026',
       error: 'Une erreur s\'est produite. Veuillez r\u00e9essayer.',
       retry: 'R\u00e9essayer',
+      clear: 'Effacer le chat',
     },
     de: {
       trigger: 'Chat starten',
@@ -137,10 +163,11 @@ const _demitrScript = document.currentScript ||
       consent_body: 'Dieser Assistent wird von k\u00fcnstlicher Intelligenz betrieben. Durch die Nutzung stimmen Sie zu, dass Ihre Nachrichten von unserer KI verarbeitet werden, um Ihre Fragen zu beantworten. Nach Ende der Sitzung werden keine personenbezogenen Daten gespeichert.',
       consent_cta: 'Verstanden \u2014 Chat starten',
       consent_decline: 'Nein danke',
-      ai_disclosure: '\u{1F916} Sie chatten mit einer KI, nicht mit einem Menschen.',
+      ai_disclosure: 'Willkommen! Ich bin ein KI-Assistent. Wie kann ich Ihnen helfen?',
       thinking: 'Denkt nach\u2026',
       error: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',
       retry: 'Erneut versuchen',
+      clear: 'Chat l\u00f6schen',
     },
     nl: {
       trigger: 'Chat met ons',
@@ -152,10 +179,11 @@ const _demitrScript = document.currentScript ||
       consent_body: 'Deze assistent wordt aangedreven door kunstmatige intelligentie. Door verder te gaan, stemt u ermee in dat uw berichten worden verwerkt door onze AI om uw vragen te beantwoorden. Er worden geen persoonsgegevens opgeslagen na het einde van uw sessie.',
       consent_cta: 'Ik begrijp het \u2014 start chat',
       consent_decline: 'Nee bedankt',
-      ai_disclosure: '\u{1F916} U chat met een AI, niet met een mens.',
+      ai_disclosure: 'Welkom! Ik ben een AI-assistent. Hoe kan ik u helpen?',
       thinking: 'Bezig met nadenken\u2026',
       error: 'Er is iets misgegaan. Probeer het opnieuw.',
       retry: 'Opnieuw proberen',
+      clear: 'Chat wissen',
     },
     it: {
       trigger: 'Chatta con noi',
@@ -167,10 +195,11 @@ const _demitrScript = document.currentScript ||
       consent_body: 'Questo assistente \u00e8 alimentato dall\'intelligenza artificiale. Continuando, accetti che i tuoi messaggi vengano elaborati dalla nostra IA per rispondere alle tue domande. Nessun dato personale viene conservato al termine della sessione.',
       consent_cta: 'Ho capito \u2014 avvia la chat',
       consent_decline: 'No grazie',
-      ai_disclosure: '\u{1F916} Stai chattando con un\'IA, non con una persona.',
+      ai_disclosure: 'Benvenuto! Sono un assistente IA. Come posso aiutarla?',
       thinking: 'Sto pensando\u2026',
       error: 'Qualcosa \u00e8 andato storto. Riprova.',
       retry: 'Riprova',
+      clear: 'Cancella chat',
     },
     es: {
       trigger: 'Chatea con nosotros',
@@ -182,10 +211,11 @@ const _demitrScript = document.currentScript ||
       consent_body: 'Este asistente funciona con inteligencia artificial. Al continuar, aceptas que tus mensajes sean procesados por nuestra IA para responder a tus preguntas. No se almacenan datos personales despu\u00e9s de que finalice tu sesi\u00f3n.',
       consent_cta: 'Entendido \u2014 iniciar chat',
       consent_decline: 'No, gracias',
-      ai_disclosure: '\u{1F916} Est\u00e1s chateando con una IA, no con una persona.',
+      ai_disclosure: 'Bienvenido! Soy un asistente de IA. Como puedo ayudarle?',
       thinking: 'Pensando\u2026',
       error: 'Algo sali\u00f3 mal. Por favor, int\u00e9ntalo de nuevo.',
       retry: 'Reintentar',
+      clear: 'Borrar chat',
     },
   };
 
@@ -205,12 +235,48 @@ const _demitrScript = document.currentScript ||
     return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
   }
 
-  // \u2500\u2500 State \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // \u2500\u2500 State (localStorage for persistence across refresh/tabs) \u2500\u2500\u2500\u2500\u2500\u2500\u2500
   let open = false;
-  let consentGiven = sessionStorage.getItem('demitr_consent') === '1';
-  let sessionId = sessionStorage.getItem('demitr_sid') ?? generateUUID();
+  let consentGiven = localStorage.getItem('demitr_consent') === '1';
+  let sessionId = localStorage.getItem('demitr_sid') ?? generateUUID();
   let lastUserText = '';
-  sessionStorage.setItem('demitr_sid', sessionId);
+  localStorage.setItem('demitr_sid', sessionId);
+
+  // \u2500\u2500 Chat history persistence \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // Stores messages in localStorage so chat history survives page refresh,
+  // navigation between pages on the same site, and tab close/reopen.
+  // Each message is { role: 'user'|'assistant'|'system', text: string }.
+  // Capped at 100 messages to prevent unbounded localStorage growth.
+  const HISTORY_KEY = 'demitr_history';
+  const MAX_HISTORY = 100;
+
+  function loadHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.slice(-MAX_HISTORY) : [];
+    } catch { return []; }
+  }
+
+  function saveHistory(msgs) {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(msgs.slice(-MAX_HISTORY)));
+    } catch { /* storage full or blocked \u2014 degrade gracefully */ }
+  }
+
+  function appendHistory(role, text) {
+    const msgs = loadHistory();
+    msgs.push({ role, text });
+    saveHistory(msgs);
+  }
+
+  function clearHistory() {
+    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem('demitr_sid');
+    sessionId = generateUUID();
+    localStorage.setItem('demitr_sid', sessionId);
+  }
 
   // \u2500\u2500 DOM helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   // Note: this helper no longer accepts a `style` attribute \u2014 all styling
@@ -255,7 +321,7 @@ const _demitrScript = document.currentScript ||
 
     #demitr-window {
       position: fixed; bottom: 90px; right: 24px; z-index: 9999;
-      width: 380px; max-height: 620px;
+      width: 380px; max-height: min(680px, calc(100vh - 120px));
       background: #fff; border-radius: 16px;
       box-shadow: 0 8px 40px rgba(0,0,0,.18);
       display: flex; flex-direction: column; overflow: hidden;
@@ -270,6 +336,15 @@ const _demitrScript = document.currentScript ||
     }
     #demitr-header h3 { margin: 0; font-size: 15px; font-weight: 700; }
     #demitr-header p { margin: 2px 0 0; font-size: 11px; opacity: .8; }
+    .demitr-header-actions {
+      display: flex; align-items: center; gap: 4px;
+    }
+    #demitr-clear {
+      background: rgba(255,255,255,.1); border: none; color: rgba(255,255,255,.7);
+      cursor: pointer; padding: 5px; border-radius: 6px; transition: all .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #demitr-clear:hover { background: rgba(255,255,255,.2); color: #fff; }
     #demitr-close {
       background: none; border: none; color: #fff; font-size: 20px;
       cursor: pointer; line-height: 1; padding: 0 4px;
@@ -277,6 +352,7 @@ const _demitrScript = document.currentScript ||
 
     #demitr-messages {
       flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      min-height: 280px;
     }
     .demitr-msg {
       max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.5;
@@ -287,7 +363,7 @@ const _demitrScript = document.currentScript ||
     .demitr-msg.assistant {
       align-self: flex-start; background: #f3f4f6; color: #111; border-bottom-left-radius: 4px;
     }
-    .demitr-msg.system { align-self: center; font-size: 11px; color: #888; font-style: italic; }
+    .demitr-msg.system { align-self: flex-start; font-size: 13px; color: #475569; background: #f0edf7; border-radius: 12px; border-bottom-left-radius: 4px; padding: 10px 14px; max-width: 85%; line-height: 1.5; }
     .demitr-thinking { align-self: flex-start; font-size: 12px; color: #888; font-style: italic; }
 
     .demitr-retry-btn {
@@ -312,24 +388,24 @@ const _demitrScript = document.currentScript ||
     }
     #demitr-send:disabled { opacity: .5; cursor: not-allowed; }
 
-    /* Consent overlay */
+    /* Consent screen — shown as the only child of chatWindow before consent is given */
     #demitr-consent {
-      position: absolute; inset: 0; background: #fff; z-index: 10;
+      flex: 1; background: #fff;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      padding: 32px 24px; text-align: center; gap: 16px; overflow-y: auto;
+      padding: 32px 28px 24px; text-align: center; gap: 14px;
     }
-    #demitr-consent h4 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
-    #demitr-consent p { margin: 0; font-size: 13.5px; color: #555; line-height: 1.6; }
-    .demitr-consent-icon { font-size: 32px; }
+    #demitr-consent h4 { margin: 0; font-size: 17px; font-weight: 700; color: #111; }
+    #demitr-consent p { margin: 0; font-size: 13px; color: #555; line-height: 1.6; }
+    .demitr-consent-icon { font-size: 28px; }
     #demitr-consent-accept {
       background: var(--demitr-color); color: #fff; border: none; border-radius: 10px;
-      padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
-      flex-shrink: 0; margin-top: 8px;
+      padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;
+      flex-shrink: 0; margin-top: 4px;
     }
     #demitr-consent-accept:hover { filter: brightness(1.1); }
     #demitr-consent-decline {
-      background: none; border: none; color: #888; font-size: 13px; cursor: pointer;
-      text-decoration: underline; flex-shrink: 0; padding: 4px;
+      background: none; border: none; color: #888; font-size: 12px; cursor: pointer;
+      text-decoration: underline; flex-shrink: 0; padding: 2px;
     }
 
     #demitr-powered {
@@ -342,9 +418,11 @@ const _demitrScript = document.currentScript ||
     }
     #demitr-powered a:hover { text-decoration: underline; }
 
-    @media (max-width: 400px) {
-      #demitr-window { width: calc(100vw - 32px); right: 16px; }
+    @media (max-width: 440px) {
+      #demitr-window { width: calc(100vw - 32px); right: 16px; bottom: 76px; max-height: calc(100vh - 100px); }
       #demitr-root.demitr-left #demitr-window { left: 16px; right: auto; }
+      #demitr-consent { padding: 20px 18px 16px; gap: 10px; }
+      #demitr-consent p { font-size: 12.5px; }
     }
   `;
 
@@ -387,10 +465,20 @@ const _demitrScript = document.currentScript ||
   // CSS even if the custom property is eventually banned by CSP.
   root.style.setProperty('--demitr-color', color);
 
-  // Trigger button
-  const trigger = el('button', { id: 'demitr-trigger', 'aria-label': i18n.trigger },
-    '\u{1F4AC} ', i18n.trigger
-  );
+  // Trigger button — SVG chat bubble matching brand icon (white on violet)
+  const NS = 'http://www.w3.org/2000/svg';
+  const triggerIcon = document.createElementNS(NS, 'svg');
+  triggerIcon.setAttribute('viewBox', '0 0 24 24');
+  triggerIcon.setAttribute('width', '18');
+  triggerIcon.setAttribute('height', '18');
+  triggerIcon.setAttribute('fill', 'white');
+  triggerIcon.setAttribute('aria-hidden', 'true');
+  const iconPath = document.createElementNS(NS, 'path');
+  iconPath.setAttribute('d', 'M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-9l-5 5v-5H4a2 2 0 0 1-2-2V4z');
+  triggerIcon.appendChild(iconPath);
+  const trigger = el('button', { id: 'demitr-trigger', 'aria-label': i18n.trigger });
+  trigger.appendChild(triggerIcon);
+  trigger.appendChild(document.createTextNode(' ' + i18n.trigger));
 
   // Chat window
   const chatWindow = el('div', { id: 'demitr-window', 'aria-label': i18n.title, role: 'dialog', class: 'demitr-hidden' });
@@ -400,9 +488,32 @@ const _demitrScript = document.currentScript ||
   const headerText = el('div', {});
   headerText.appendChild(el('h3', {}, i18n.title));
   headerText.appendChild(el('p', {}, i18n.subtitle));
+  const headerActions = el('div', { class: 'demitr-header-actions' });
+  const clearBtn = el('button', { id: 'demitr-clear', 'aria-label': i18n.clear, title: i18n.clear });
+  const clearSvg = document.createElementNS(NS, 'svg');
+  clearSvg.setAttribute('viewBox', '0 0 24 24');
+  clearSvg.setAttribute('width', '16');
+  clearSvg.setAttribute('height', '16');
+  clearSvg.setAttribute('fill', 'none');
+  clearSvg.setAttribute('stroke', 'currentColor');
+  clearSvg.setAttribute('stroke-width', '2');
+  clearSvg.setAttribute('stroke-linecap', 'round');
+  clearSvg.setAttribute('stroke-linejoin', 'round');
+  const clearPath1 = document.createElementNS(NS, 'path');
+  clearPath1.setAttribute('d', 'M3 6h18');
+  const clearPath2 = document.createElementNS(NS, 'path');
+  clearPath2.setAttribute('d', 'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2');
+  const clearPath3 = document.createElementNS(NS, 'path');
+  clearPath3.setAttribute('d', 'M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6');
+  clearSvg.appendChild(clearPath1);
+  clearSvg.appendChild(clearPath2);
+  clearSvg.appendChild(clearPath3);
+  clearBtn.appendChild(clearSvg);
   const closeBtn = el('button', { id: 'demitr-close', 'aria-label': 'Close' }, '\u00d7');
+  headerActions.appendChild(clearBtn);
+  headerActions.appendChild(closeBtn);
   header.appendChild(headerText);
-  header.appendChild(closeBtn);
+  header.appendChild(headerActions);
 
   // Messages
   const messages = el('div', { id: 'demitr-messages', 'aria-live': 'polite' });
@@ -427,24 +538,33 @@ const _demitrScript = document.currentScript ||
   consent.appendChild(consentAccept);
   consent.appendChild(consentDecline);
 
-  chatWindow.appendChild(header);
-  chatWindow.appendChild(messages);
-  chatWindow.appendChild(inputRow);
-
   // "Powered by demitr.ai" badge \u2014 opt-in only.
   // Paid tier: hidden when whiteLabel feature is on.
   // Free tier: shown only when site owner explicitly sets data-show-powered-by="1"
   // (default OFF \u2014 required for wordpress.org Guideline 10 compliance).
   const shouldShowBadge = isPaidMode ? !whiteLabel : showPoweredBy;
+  let powered = null;
   if (shouldShowBadge) {
-    const powered = el('div', { id: 'demitr-powered' });
+    powered = el('div', { id: 'demitr-powered' });
     const link = el('a', { href: 'https://demitr.ai', target: '_blank', rel: 'noopener' }, 'demitr.ai');
     powered.appendChild(document.createTextNode('Powered by '));
     powered.appendChild(link);
-    chatWindow.appendChild(powered);
   }
 
-  if (!consentGiven) chatWindow.appendChild(consent);
+  /** Populate chatWindow with the full chat UI */
+  function buildChatUI() {
+    chatWindow.appendChild(header);
+    chatWindow.appendChild(messages);
+    chatWindow.appendChild(inputRow);
+    if (powered) chatWindow.appendChild(powered);
+  }
+
+  if (consentGiven) {
+    buildChatUI();
+  } else {
+    // Show consent as the ONLY content — no header clipping the space
+    chatWindow.appendChild(consent);
+  }
 
   root.appendChild(trigger);
   root.appendChild(chatWindow);
@@ -472,13 +592,40 @@ const _demitrScript = document.currentScript ||
     messages.appendChild(msg);
   }
 
+  // \u2500\u2500 Restore chat history from localStorage on first open \u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  let historyRestored = false;
+
+  function restoreHistory() {
+    if (historyRestored) return;
+    historyRestored = true;
+    const history = loadHistory();
+    if (history.length === 0) {
+      if (consentGiven) {
+        addSystemMsg(i18n.ai_disclosure);
+        appendHistory('system', i18n.ai_disclosure);
+      }
+      return;
+    }
+    for (const msg of history) {
+      if (msg.role === 'system') {
+        addSystemMsg(msg.text);
+      } else if (msg.role === 'user') {
+        messages.appendChild(el('div', { class: 'demitr-msg user' }, msg.text));
+      } else if (msg.role === 'assistant') {
+        const bubble = el('div', { class: 'demitr-msg assistant' });
+        bubble.textContent = '';
+        bubble.insertAdjacentHTML('beforeend', renderMarkdown(msg.text));
+        messages.appendChild(bubble);
+      }
+    }
+    messages.scrollTop = messages.scrollHeight;
+  }
+
   // \u2500\u2500 Logic \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   function toggleWindow() {
     open = !open;
     chatWindow.classList.toggle('demitr-hidden', !open);
-    if (open && messages.children.length === 0 && consentGiven) {
-      addSystemMsg(i18n.ai_disclosure);
-    }
+    if (open && consentGiven) restoreHistory();
     if (open) input.focus();
   }
 
@@ -492,13 +639,23 @@ const _demitrScript = document.currentScript ||
 
   consentAccept.addEventListener('click', () => {
     consentGiven = true;
-    sessionStorage.setItem('demitr_consent', '1');
+    localStorage.setItem('demitr_consent', '1');
     consent.remove();
-    addSystemMsg(i18n.ai_disclosure);
+    buildChatUI();
+    restoreHistory(); // shows AI disclosure as part of first restore
     input.focus();
   });
 
   consentDecline.addEventListener('click', toggleWindow);
+
+  clearBtn.addEventListener('click', () => {
+    clearHistory();
+    messages.textContent = '';
+    historyRestored = false;
+    addSystemMsg(i18n.ai_disclosure);
+    appendHistory('system', i18n.ai_disclosure);
+    historyRestored = true;
+  });
 
   /**
    * Build the JSON body shared by both /api/chat and /api/chat/stream.
@@ -536,6 +693,7 @@ const _demitrScript = document.currentScript ||
       const userMsg = el('div', { class: 'demitr-msg user' }, text);
       messages.appendChild(userMsg);
       input.value = '';
+      appendHistory('user', text);
     }
 
     sendBtn.disabled = true;
@@ -599,6 +757,8 @@ const _demitrScript = document.currentScript ||
             }
           }
         }
+        // Stream complete — save full assistant reply to history
+        if (fullText) appendHistory('assistant', fullText);
       } catch (streamErr) {
         // ── Fallback to non-streaming /api/chat ───────────────────
         if (streamed) throw streamErr; // don't double-try if stream was mid-flight
@@ -617,6 +777,7 @@ const _demitrScript = document.currentScript ||
         const safeHTML = renderMarkdown(data.reply);
         reply.insertAdjacentHTML('beforeend', safeHTML);
         messages.appendChild(reply);
+        appendHistory('assistant', data.reply);
       }
     } catch {
       if (thinking.parentNode) thinking.remove();
@@ -643,4 +804,19 @@ const _demitrScript = document.currentScript ||
       sendMessage();
     }
   });
+
+  // ── Widget installation ping ──────────────────────────────────────────
+  // Single fire-and-forget POST on load so the site owner (and Demitr admin)
+  // can see where the widget is embedded. Also triggers origin validation
+  // for paid customers with domain restrictions.
+  try {
+    fetch(`${apiBase}/api/widget/ping`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: isPaidMode ? apiKey : null,
+        pageUrl: location.href,
+      }),
+    }).catch(() => {}); // silent — tracking failure must never break the widget
+  } catch { /* ignore */ }
 })();
